@@ -18,6 +18,17 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\boardgame\bgboard.h" />
+    <ClInclude Include="..\src\boardgame\bgmacros.h" />
+    <ClInclude Include="..\src\boardgame\bgmove.h" />
+    <ClInclude Include="..\src\boardgame\bgplayer.h" />
+    <ClInclude Include="..\src\boardgame\bgplayers.h" />
+    <ClInclude Include="..\src\boardgame\bgprint.h" />
+    <ClInclude Include="..\src\boardgame\bgstate.h" />
+    <ClInclude Include="..\src\boardgame\bgtypes.h" />
+    <ClInclude Include="..\src\boardgame\boardgame.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -72,19 +83,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\src\;$(IncludePath)</IncludePath>
+    <IncludePath>..\src\;..\src\boardgames\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\src\;$(IncludePath)</IncludePath>
+    <IncludePath>..\src\;..\src\boardgames\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\src\;$(IncludePath)</IncludePath>
+    <IncludePath>..\src\;..\src\boardgames\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\src\;$(IncludePath)</IncludePath>
+    <IncludePath>..\src\;..\src\boardgames\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -146,16 +157,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\gameboard.h" />
-    <ClInclude Include="..\src\gamemove.h" />
-    <ClInclude Include="..\src\gameplayer.h" />
-    <ClInclude Include="..\src\gameplayers.h" />
-    <ClInclude Include="..\src\gamestate.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
