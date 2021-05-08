@@ -4,148 +4,156 @@
  * @brief Implementation of Move Class
  * @version 0.1
  * @date 2021-04-22
- * 
+ *
  * @copyright Copyright (c) 2021
- * 
+ *
  */
 
 #ifndef BG_MOVE_H_
 #define BG_MOVE_H_
 
 #include "bgtypes.h"
+#include "bgpiece.h"
 
 BG_BEGIN
 
+namespace move
+{
+  enum class Enum
+  {
+    INVALID,
+    VALID,
+    WINNING,
+  };
+} // namespace move
+
 /**
  * @brief General Move class to store the move board of the game
+ * @code .cpp
+ * virtual ~Move();
+ * virtual Move * copy();
+ * virtual Move * move();
+ * @endcode
  * 
- * @tparam T 
+ * @tparam T
  */
-template <typename T>
+template <class T>
 class Move
 {
 public:
   //-------------------CONSTRUCTORS------------------
 
-  /**
-   * @brief Construct a new Move object
-   */
-  Move();
+  Move() = delete;
 
   /**
    * @brief Construct a new Move object
-   * 
-   * @param row 
-   * @param col 
-   * @param piece 
+   *
+   * @param row
+   * @param col
+   * @param piece [no copy] [direct pointer] [lifetime] [deletes after]
    */
-  Move(const std::size_t row, const std::size_t col, const T &piece);
+  Move(int_t row, int_t col, const Piece<T> &piece) noexcept : _row{row}, _col{col}, _piece{piece.copy()}
+  {
+    _ISDBG_ bgdebug("Move::Move(int,int,ptr)", "row=" + std::to_string(row) + "|_row=" + std::to_string(_row) + "|col=" + std::to_string(col) + "|_col=" + std::to_string(_col));
+  }
+
+  Move(int_t row, int_t col, Piece<T> &&piece) noexcept : _row{row}, _col{col}, _piece{piece.move()}
+  {
+    _ISDBG_ bgdebug("Move::Move(int,int,ptr)", "row=" + std::to_string(row) + "|_row=" + std::to_string(_row) + "|col=" + std::to_string(col) + "|_col=" + std::to_string(_col));
+  }
+
+  Move(const Move<T> &other) : _row{other._row}, _col{other._col}, _piece{other._piece->copy()} {}
+
+  Move<T> &operator=(const Move<T> &other) noexcept
+  {
+    if (this != &other)
+    {
+      // Free the existing resource.
+      deleteptr(_piece);
+
+      // Copy the data pointer and its length from the
+      // source object.
+      _piece = new Piece<T>{other._piece};
+      _row = other._row;
+      _col = other._col;
+    }
+    return *this;
+  }
+
+  Move(Move<T> &&other) noexcept : _row{other._row}, _col{other._col}
+  {
+    *this = std::move(other);
+  }
+
+  Move<T> &operator=(Move<T> &&other) noexcept
+  {
+    if (this != &other)
+    {
+      // Free the existing resource.
+      deleteptr(_piece);
+
+      // Copy the data pointer from the source object.
+      _piece = other._piece;
+      _row = other._row;
+      _col = other._col;
+
+      // Release the data pointer from the source object so that
+      // the destructor does not free the memory multiple times.
+      other._piece = nullptr;
+      other._row = other._col = -1;
+    }
+    return *this;
+  }
 
   /**
    * @brief [virtual] Destroy the Move object
    */
-  virtual ~Move();
+  virtual ~Move()
+  {
+    _ISDBG_ bgdebug("Move::~Move");
+
+    _row = -1;
+    _col = -1;
+
+    deleteptr(_piece);
+  }
 
   //-----------------------GETTERS-------------------------
 
   /**
    * @brief row
-   * 
-   * @return std::size_t
+   * @return int_t
    */
-  inline std::size_t row() const;
+  inline auto row() const noexcept { return _row; }
 
   /**
    * @brief column
-   * 
-   * @return std::size_t
+   * @return int_t
    */
-  inline std::size_t col() const;
+  inline auto col() const noexcept { return _col; }
 
   /**
    * @brief piece
-   * 
    * @return T
    */
-  inline T piece() const;
+  inline const auto &piece() const noexcept { return _piece; }
 
-  //-----------------------SETTERS-------------------------
+  /**
+   * @brief piece
+   * @return T
+   */
+  inline auto &piece() noexcept { return _piece; }
 
-  //set row
-  inline void set_row(const std::size_t row);
-  //set col
-  inline void set_col(const std::size_t col);
-  //set piece
-  inline void set_piece(const T &piece);
-  //set row, col, piece
-  inline void set(const std::size_t row, const std::size_t col, const T &piece);
+  //-----------------VIRTUAL--------------------
+
+  virtual Move<T> *copy() const { return new Move<T>{*this}; }
+  virtual Move<T> *move() { return new Move<T>{std::forward<Move<T>>(*this)}; }
 
 protected:
-  std::size_t _row; //row
-  std::size_t _col; //col
-  T _piece;         //piece
+  int_t _row{-1};            //row
+  int_t _col{-1};            //col
+  Piece<T> *_piece{nullptr}; //piece
 };
-
-//-------------------------------------------------------------------------------------------------------
-//---------------------------------------IMPLEMENTATION--------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-
-template <typename T>
-inline Move<T>::Move() {}
-
-template <typename T>
-inline Move<T>::Move(const std::size_t row, const std::size_t col, const T &piece) : _row(row), _col(row), _piece(piece) {}
-
-template <typename T>
-inline Move<T>::~Move()
-{
-  _row = -1;
-  _col = -1;
-  _piece = T();
-}
-
-template <typename T>
-inline std::size_t Move<T>::row() const
-{
-  return _row;
-}
-template <typename T>
-inline std::size_t Move<T>::col() const
-{
-  return _col;
-}
-
-template <typename T>
-inline T Move<T>::piece() const
-{
-  return _piece;
-}
-
-template <typename T>
-inline void Move<T>::set_row(const std::size_t row)
-{
-  _row = row;
-}
-
-template <typename T>
-inline void Move<T>::set_col(const std::size_t col)
-{
-  _col = col;
-}
-
-template <typename T>
-inline void Move<T>::set_piece(const T &piece)
-{
-  _piece = piece;
-}
-
-template <typename T>
-inline void Move<T>::set(const std::size_t row, const std::size_t col, const T &piece)
-{
-  this->_row = row;
-  this->_col = col;
-  this->_piece = piece;
-}
 
 BG_END
 

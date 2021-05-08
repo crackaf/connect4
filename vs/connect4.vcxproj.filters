@@ -9,19 +9,30 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Board Game">
       <UniqueIdentifier>{b946ac27-2902-4877-b4ad-6569ff0aece7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\boardgame\bgprint.h">
+    <ClInclude Include="..\src\connet4\c4human.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\connet4\c4game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\connet4\c4types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\boardgame\bgame.h">
       <Filter>Board Game</Filter>
     </ClInclude>
     <ClInclude Include="..\src\boardgame\bgboard.h">
+      <Filter>Board Game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\boardgame\bgdocs.h">
+      <Filter>Board Game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\boardgame\bgload.h">
       <Filter>Board Game</Filter>
     </ClInclude>
     <ClInclude Include="..\src\boardgame\bgmacros.h">
@@ -30,13 +41,19 @@
     <ClInclude Include="..\src\boardgame\bgmove.h">
       <Filter>Board Game</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\boardgame\bgpiece.h">
+      <Filter>Board Game</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\boardgame\bgplayer.h">
       <Filter>Board Game</Filter>
     </ClInclude>
     <ClInclude Include="..\src\boardgame\bgplayers.h">
       <Filter>Board Game</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\boardgame\bgstate.h">
+    <ClInclude Include="..\src\boardgame\bgprint.h">
+      <Filter>Board Game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\boardgame\bgsave.h">
       <Filter>Board Game</Filter>
     </ClInclude>
     <ClInclude Include="..\src\boardgame\bgtypes.h">
@@ -45,5 +62,13 @@
     <ClInclude Include="..\src\boardgame\boardgame.h">
       <Filter>Board Game</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\boardgame\color.h">
+      <Filter>Board Game</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\connet4\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

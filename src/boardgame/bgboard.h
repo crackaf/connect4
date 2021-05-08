@@ -4,460 +4,449 @@
  * @brief Implementation of Board Class
  * @version 0.1
  * @date 2021-04-22
- * 
+ *
  * @copyright Copyright (c) 2021
- * 
+ *
  */
 
 #ifndef BG_BOARD_H_
 #define BG_BOARD_H_
 
-#include<ostream>
 #include <vector>
+#include <utility>
 
 #include "bgtypes.h"
 
 BG_BEGIN
 
+/* sample board
+  rows
+  ^
+  |
+  5   50  51  52  54  54  55
+  4   40  41  42  43  44  45
+  3   30  31  32  33  34  35
+  2   20  21  22  23  24  25
+  1   10  11  12  13  14  15
+  0   00  01  02  03  04  05
+
+      0   1   2   3   4   5 --> cols
+*/
+
+/**
+ * @brief new type defined for board
+ * @details std::vector<std::vector<class T *>>
+ * @code .cpp
+ * virtual ~Board();
+ * virtual Board* copy() const;
+ * virtual Board* move();
+ * @endcode
+ * 
+ * @tparam T
+ */
+template <class T>
+using grid = std::vector<std::vector<T>>;
+
+struct Point
+{
+  int_t row{0}, col{0};
+};
+
 /**
  * @brief General Board class to store the row x col board of the game
  * @tparam T is the type of which board will be created
  */
-template <typename T>
+template <class T>
 class Board
 {
 public:
   //-------------------CONSTRUCTORS------------------
 
+  Board() {}
+
   /**
-   * @brief Construct a new Board object
+   * @brief [deep copy] Construct a new Board object
    */
-  Board();
+  Board(const Board<T> &other) : _rows{other._rows}, _cols{other._cols}
+  {
+    _board.resize(_rows);
+    for (auto r = 0; r < _rows; ++r)
+      for (auto c = 0; c < _cols; ++c)
+        _board.at(r).push_back(other._board.at(r).at(c) ? new T{*(other._board.at(r).at(c))} : nullptr);
+  }
+
+  Board<T> &operator=(const Board<T> &other)
+  {
+    if (this != &other)
+    {
+      // Free the existing resource.
+      clear();
+
+      // Copy the data pointer from the source object.
+      _rows = other._rows;
+      _cols = other._cols;
+
+      _board.resize(_rows);
+      for (auto r = 0; r < _rows; ++r)
+        for (auto c = 0; c < _cols; ++c)
+          _board.at(r).push_back(other._board.at(r).at(c) ? new T{*(other._board.at(r).at(c))} : nullptr); //shallow copying
+    }
+    return *this;
+  }
+
+  /**
+  * @brief Move to a new Board object
+  */
+  Board(Board<T> &&other) noexcept : _rows{other._rows}, _cols{other._cols} { *this = std::move(other); }
+  Board<T> &operator=(Board<T> &&other)
+  {
+    if (this != &other)
+    {
+      // Free the existing resource.
+      clear();
+
+      // Copy the data pointer from the source object.
+      _rows = other._rows;
+      _cols = other._cols;
+
+      _board.resize(_rows);
+      for (auto r = 0; r < _rows; ++r)
+        for (auto c = 0; c < _cols; ++c)
+          _board.at(r).push_back(other._board.at(r).at(c)); //shallow copyinh
+
+      // Release the data pointer from the source object so that
+      // the destructor does not free the memory multiple times.
+      other._board.clear();
+      other._rows = other._cols = 0;
+    }
+    return *this;
+  }
 
   /**
    * @brief Construct a new Board object
-   * 
+   *
    * @param rows number of rows of new Board
    * @param cols number of cols of new Board
-   * @param default_val default value to add to empty board
    */
-  Board(const std::size_t rows, const std::size_t cols);
-
-  /**
-   * @brief Construct a new Board object
-   * 
-   * @param rows number of rows of new Board
-   * @param cols number of cols of new Board
-   * @param default_val default value to add to empty board
-   */
-  Board(const std::size_t rows, const std::size_t cols, const T default_val);
+  Board(size_t rows, size_t cols) : _rows{rows}, _cols{cols} { _InitBoard(); }
 
   /**
    * @brief Construct a new Board object with given 2D board
-   * 
-   * @param board 2D board you want to copy
+   *
+   * @param board [deep copy of T] 2D board you want to copy
    * @param rows rows of the given board
    * @param cols cols of the given board
    */
-  Board(const T **board, const std::size_t rows, const std::size_t cols);
+  Board(const T **board, size_t rows, size_t cols) : _rows{rows}, _cols{cols}
+  {
+    _InitBoard();
+    for (auto row = 0; row < _rows; ++row)
+      for (auto col = 0; col < _cols; ++col)
+        _board.at(row).at(col) = new T{board[row][col]};
+  }
 
   /**
    * @brief [virtual] Destroy the Board object
    */
-  virtual ~Board();
+  virtual ~Board() { clear(); }
 
   //-----------------------GETTERS-------------------------
 
   /**
    * @brief number of rows
-   * 
-   * @return std::size_t
+   * @return size_t
    */
-  inline std::size_t rows() const;
+  inline auto rows() const noexcept { return _rows; }
 
   /**
    * @brief number of columns
-   * 
-   * @return std::size_t
+   *
+   * @return size_t
    */
-  inline std::size_t cols() const;
+  inline auto cols() const noexcept { return _cols; }
 
   /**
    * @brief const reference to value at row,col
-   * 
-   * @param row 
-   * @param col 
-   * @return const T& 
+   *
+   * @param row
+   * @param col
+   * @return const T*
    */
-  inline const T &at(const std::size_t row, const std::size_t col) const;
+  inline const auto &at(size_t row, size_t col) const { return _board.at(row).at(col); }
+
   /**
    * @brief reference to value at row,col
-   * 
-   * @param row 
-   * @param col 
-   * @return T& 
+   * @param row
+   * @param col
+   * @return T&
    */
-  inline T &at(const std::size_t row, const std::size_t col);
+  inline auto &at(size_t row, size_t col) { return _board.at(row).at(col); }
 
   /**
    * @brief direct pointer to the memory array used internally by the board to store its owned elements.
-   * 
-   * @return T** 
+   * @return const  T**
    */
-  inline T **data();
+  inline const auto &data() const { return _ToPtr(); }
+
   /**
    * @brief direct pointer to the memory array used internally by the board to store its owned elements.
-   * 
-   * @return const  T** 
+   * @return T**
    */
-  inline const T **data() const;
+  inline auto &data() { return _ToPtr(); }
 
   //-----------------------SETTERS-------------------------
 
   /**
    * @brief resize the board object
-   * 
-   * @param rows 
-   * @param cols 
+   *
+   * @param rows
+   * @param cols
    */
-  inline void resize(const std::size_t rows, const std::size_t col);
+  inline void resize(size_t myrows, size_t mycols) noexcept
+  {
+    _rows = _board.size();
+    if (myrows < _rows)
+      for (auto r = myrows; r < _rows; ++r)
+        for (auto &c : _board[r])
+          deleteptr(c); //delete extra
 
-  /**
-   * @brief resize the board object
-   * 
-   * @param rows 
-   * @param cols 
-   */
-  inline void resize(const std::size_t rows, const std::size_t col, const T default_val);
+    _board.resize(myrows);
+
+    if(_board.size()>0)
+    _cols = _board.at(0).size();
+
+    for (auto &row : _board)
+    {
+      if (mycols < _cols)
+        for (auto c = mycols; c < _cols; ++c)
+          deleteptr(row[c]);       //delete extra
+      row.resize(mycols, nullptr); //resize
+    }
+    _rows = myrows;
+    _cols = mycols;
+    if (_rows == 0 && _cols == 0)
+      _board.clear();
+  }
 
   /**
    * @brief Set the board object
-   * 
-   * @param row 
-   * @param col 
-   * @param val T
+   *
+   * @param row
+   * @param col
+   * @param val [deel copy of T]
    */
-  inline void insert(const std::size_t row, const std::size_t col, const T val);
+  inline void insert(size_t row, size_t col, const T &val)
+  {
+    erase(row, col);
+    if(&val)
+    _board.at(row).at(col) = new T{val};
+  }
+
+  /**
+   * @brief Set the board object
+   *
+   * @param row
+   * @param col
+   * @param val [copy of T] (move constructor)
+   */
+  inline void insert(size_t row, size_t col, T &&val)
+  {
+    erase(row, col);
+    _board.at(row).at(col) = new T{std::forward<T>(val)};
+  }
 
   /**
    * @brief resets the board
    */
-  void clear();
+  void clear() noexcept { resize(0, 0); }
+
+  inline void erase(size_t row, size_t col) { deleteptr(_board.at(row).at(col));}
 
   /**
    * @brief deletes the dynamic array
-   * 
+   *
    * @param data T**
-   * @param rows 
+   * @param rows
    */
-  static void del(T **data, const std::size_t rows);
+  static void del(T **data, size_t rows)
+  {
+    for (auto row = 0; row < rows; ++row)
+      deletearr(data[row]);
+    deletearr(data);
+  }
 
   //------------------------MEMBER FUNCTIONS-----------------------------
 
   /**
    * @brief check if the board contains or not
-   * 
-   * @param val to check in board 
+   *
+   * @param val to check in board
    * @return true | false
    */
-  bool isFound(const T &val);
+  bool IsFound(const T &val) const
+  {
+    for (const auto &row : _board)
+      for (const auto &elem : row)
+        if (elem && *elem == val)
+          return true;
+    return false;
+  }
 
   /**
-   * @brief print the current board
+   * @brief returns the first position found of val
+   *
+   * @param val to check in board
+   * @return {row,col}
    */
-  void print() const;
+  auto &Find(const T &val) const
+  {
+    for (auto row = 0; row < _rows; ++row)
+      for (auto col = 0; col < _cols; ++col)
+        if (_board.at(row).at(col) && *(_board.at(row).at(col)) == val)
+          return {row, col};
+    return {-1, -1};
+  }
+
+  /**
+   * @brief copy of array used internally by the board to store its owned elements.
+   *
+   * @param row
+   * @return T*
+   */
+  inline auto &GetRow(size_t row) const { return _ToPtrRow(row); }
+
+  /**
+   * @brief copy of array used internally by the board to store its owned elements.
+   *
+   * @param row
+   * @return T*
+   */
+  inline auto &GetCol(size_t col) const { return _ToPtrCol(col); }
 
   //-------------------OPERATORS-------------------------
 
   /**
    * @brief direct pointer to the memory array used internally by the board to store its owned elements.
-   * 
-   * @param row 
-   * @return T* 
+   *
+   * @param row
+   * @return T** or nullptr
    */
-  inline T *operator()(const std::size_t row);
+  inline auto &operator[](size_t row) { return _board.at(row).data(); }
+
   /**
    * @brief direct pointer to the memory array used internally by the board to store its owned elements.
-   * 
-   * @param row 
-   * @return const T* 
+   *
+   * @param row
+   * @return const T** or nullptr
    */
-  inline const T *operator()(const std::size_t row) const;
+  inline const auto &operator[](size_t row) const { return _board.at(row).data(); }
 
   /**
-   * @brief returns value at [row][col] on the board
-   * 
-   * @param row 
-   * @param col 
-   * @return T 
+   * @brief returns reference value at [row][col] on the board
+   *
+   * @param row
+   * @param col
+   * @return T* or nullptr
    */
-  inline const T &operator()(const std::size_t row, const std::size_t col) const;
+  inline const auto &operator()(size_t row, size_t col) const { return _board.at(row).at(col); }
+
   /**
-   * @brief returns value at [row][col] on the board
-   * 
-   * @param row 
-   * @param col 
-   * @return T 
+   * @brief returns reference value at [row][col] on the board
+   *
+   * @param row
+   * @param col
+   * @return T* or nullptr
    */
-  inline T &operator()(const std::size_t row, const std::size_t col);
+  inline auto &operator()(size_t row, size_t col) { return _board.at(row).at(col); }
+
+  //--------------------VIRTUAL--------------------------
+
+  virtual Board<T> *copy() const { return new Board<T>{*this}; }
+  virtual Board<T> *move() { return new Board<T>{std::forward<Board<T>>(*this)}; }
 
 protected:
-  std::size_t _rows; //rows size
-  std::size_t _cols; //column size
-  grid<T> _board;    //2D board for a game
+  size_t _rows{0};  //rows size
+  size_t _cols{0};  //column size
+  grid<T *> _board; //2D board for a game
 
+private:
   //-------------------FUNCTIONS--------------------
 
   /**
    * @brief initiaze the board with rowXcol empty values
-   * 
-   * @param default_val 
+   *
    */
-  void _InitBoard(T &default_val);
+  void _InitBoard()
+  {
+    auto drow = _rows, dcol = _cols;
+    _rows = _cols = 0;
+    clear();
+    resize(drow, dcol);
+  }
 
   /**
-   * @brief initiaze the board with rowXcol empty values
-   * 
+   * @brief  copy of array used internally by the board to store its owned elements.
+   *
+   * @param row
+   * @return <T>*
    */
-  void _InitBoard();
+  auto _ToPtrRow(size_t row) const
+  {
+    if (row >= _rows || row < 0)
+      return nullptr;
+
+    T *ptr = new T[_cols];
+    int index = 0;
+    for (const auto &ele : _board.at(row))
+      ptr[index++] = ele? T{*ele}:T{};
+    return ptr;
+  }
 
   /**
-   * @brief return the reference to value at row,col
-   * 
-   * @param row 
-   * @param col 
-   * @return T& 
+   * @brief  copy of array used internally by the board to store its owned elements.
+   *
+   * @param col
+   * @return <T>*
    */
-  T &_AtRowCol(const std::size_t row, const std::size_t col);
+  auto _ToPtrCol(size_t col) const
+  {
+    if (col >= _cols || col < 0)
+      return nullptr;
 
-  /**
-   * @brief  direct pointer to the memory array used internally by the board to store its owned elements.
-   * 
-   * @param row 
-   * @return <T>* 
-   */
-  T *_ToPtr(const std::size_t row);
+    T *ptr = new T[_rows];
+
+    int index = 0;
+    for (auto &row : _board)
+      ptr[index++] = row.at(col)? T{*(row.at(col))}:T{};
+
+    return ptr;
+  }
 
   /**
    * @brief direct pointer to the memory array used internally by the board to store its owned elements.
-   * @return <T>** 
+   * @return <T>***
    * @note Used by this->data()
    */
-  T **_ToPtr();
+  auto &_ToPtr(){return _board.data();}
+
+  /**
+   * @brief direct pointer to the memory array used internally by the board to store its owned elements.
+   * @return <T>**
+   * @note Used by this->data()
+   */
+  inline auto &_ToPtr(size_t row) { return row < _rows && row >= 0 ? _board.at(row).data() : nullptr;}
 
   //----------------------OVERLOADING----------------
 
   /**
    * @brief overloading of stream operator
-   * 
+   *
    * @param ostream&
-   * @param Board& 
-   * @return ostream& 
+   * @param Board&
+   * @return ostream&
    */
-  friend std::ostream &operator<<(std::ostream &, const Board &);
+  // friend std::ostream &operator<<(std::ostream &, const Board<T> &);
 };
-
-//-------------------------------------------------------------------------------------------------------
-//---------------------------------------IMPLEMENTATION--------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-
-template <typename T>
-inline Board<T>::Board() : _rows(0), _cols(0) {}
-
-template <typename T>
-inline Board<T>::Board(const std::size_t rows, const std::size_t cols) : _rows(rows), _cols(cols)
-{
-  _InitBoard();
-}
-
-template <typename T>
-inline Board<T>::Board(const std::size_t rows, const std::size_t cols, const T default_val) : _rows(rows), _cols(cols)
-{
-  _InitBoard(default_val);
-}
-
-template <typename T>
-inline Board<T>::Board(const T **board, const std::size_t rows, const std::size_t cols)
-{
-  _InitBoard();
-  for (auto row = 0; row < _rows; ++row)
-    for (auto col = 0; col < _cols; ++col)
-      _board.at(row).at(col) = board[row][col];
-}
-
-template <typename T>
-inline Board<T>::~Board()
-{
-  clear();
-}
-
-template <typename T>
-inline std::size_t Board<T>::rows() const
-{
-  return rows;
-}
-
-template <typename T>
-inline std::size_t Board<T>::cols() const
-{
-  return cols;
-}
-
-template <typename T>
-inline const T &Board<T>::at(const std::size_t row, const std::size_t col) const
-{
-  return _AtRowCol(row, col);
-}
-
-template <typename T>
-inline T &Board<T>::at(const std::size_t row, const std::size_t col)
-{
-  return _AtRowCol(row, col);
-}
-
-template <typename T>
-inline T **Board<T>::data()
-{
-  return _ToPtr();
-}
-
-template <typename T>
-inline const T **Board<T>::data() const
-{
-  return _ToPtr();
-}
-
-template <typename T>
-inline void Board<T>::resize(const std::size_t rows_, const std::size_t cols_)
-{
-  _rows = rows_;
-  _cols = cols_;
-  _board.resize(_rows);
-  for (auto &row : _board)
-    row.resize(_cols);
-}
-
-template <typename T>
-inline void Board<T>::resize(const std::size_t rows_, const std::size_t cols_, const T default_val)
-{
-  _rows = rows_;
-  _cols = cols_;
-  _board.resize(_rows);
-  for (auto &row : _board)
-    row.resize(_cols, default_val);
-}
-
-template <typename T>
-inline void Board<T>::insert(const std::size_t row, const std::size_t col, const T val)
-{
-  _board.at(row).at(col) = val;
-}
-
-template <typename T>
-inline void Board<T>::clear()
-{
-  for (auto &row : _board)
-  {
-    row.clear();
-    row.shrink_to_fit();
-  }
-
-  _rows = _cols = 0;
-
-  _board.clear();
-  _board.shrink_to_fit();
-}
-
-template <typename T>
-inline void Board<T>::del(T **data, const std::size_t rows)
-{
-  for (auto row = 0; row < rows; ++row)
-    delete[] data[row];
-  delete[] data;
-  return true;
-}
-
-template <typename T>
-inline bool Board<T>::isFound(const T &val)
-{
-  for (auto &row : _board)
-    for (auto &elem : row)
-      if (elem == val)
-        return true;
-  return false;
-}
-
-template <typename T>
-inline void Board<T>::print() const
-{
-}
-
-template <typename T>
-inline T *Board<T>::operator()(const std::size_t row)
-{
-  return _ToPtr(row);
-}
-
-template <typename T>
-inline const T *Board<T>::operator()(const std::size_t row) const
-{
-  return _ToPtr(row);
-}
-
-template <typename T>
-inline const T &Board<T>::operator()(const std::size_t row, const std::size_t col) const
-{
-  return _AtRowCol(row, col);
-}
-
-template <typename T>
-inline T &Board<T>::operator()(const std::size_t row, const std::size_t col)
-{
-  return _AtRowCol(row, col);
-}
-
-template <typename T>
-inline void Board<T>::_InitBoard(T &default_val)
-{
-  _board.clear();
-  _board.resize(_rows);
-  for (auto &row : _board)
-    row.resize(_cols, default_val);
-}
-
-template <typename T>
-inline void Board<T>::_InitBoard()
-{
-  _board.clear();
-  _board.resize(_rows);
-  for (auto &row : _board)
-    row.resize(_cols);
-}
-
-template <typename T>
-inline T &Board<T>::_AtRowCol(const std::size_t row, const std::size_t col)
-{
-  return _board.at(row).at(col);
-}
-
-template <typename T>
-inline T *Board<T>::_ToPtr(const std::size_t row)
-{
-  return row < _rows ? _board.at(row).data() : nullptr;
-}
-
-template <typename T>
-inline T **Board<T>::_ToPtr()
-{
-  return _board.data();
-}
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const Board<T> &B)
-{
-  B.print();
-  return out;
-}
 
 BG_END
 

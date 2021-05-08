@@ -19,15 +19,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\boardgame\bgame.h" />
     <ClInclude Include="..\src\boardgame\bgboard.h" />
+    <ClInclude Include="..\src\boardgame\bgdocs.h" />
+    <ClInclude Include="..\src\boardgame\bgload.h" />
     <ClInclude Include="..\src\boardgame\bgmacros.h" />
     <ClInclude Include="..\src\boardgame\bgmove.h" />
+    <ClInclude Include="..\src\boardgame\bgpiece.h" />
     <ClInclude Include="..\src\boardgame\bgplayer.h" />
     <ClInclude Include="..\src\boardgame\bgplayers.h" />
     <ClInclude Include="..\src\boardgame\bgprint.h" />
-    <ClInclude Include="..\src\boardgame\bgstate.h" />
+    <ClInclude Include="..\src\boardgame\bgsave.h" />
     <ClInclude Include="..\src\boardgame\bgtypes.h" />
     <ClInclude Include="..\src\boardgame\boardgame.h" />
+    <ClInclude Include="..\src\boardgame\color.h" />
+    <ClInclude Include="..\src\connet4\c4human.h" />
+    <ClInclude Include="..\src\connet4\c4game.h" />
+    <ClInclude Include="..\src\connet4\c4types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\connet4\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -84,6 +95,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\src\;..\src\boardgames\;$(IncludePath)</IncludePath>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <ClangTidyChecks>enable</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -92,6 +107,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\src\;..\src\boardgames\;$(IncludePath)</IncludePath>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <ClangTidyChecks>enable</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

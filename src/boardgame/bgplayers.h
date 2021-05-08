@@ -4,303 +4,258 @@
  * @brief Implementation of Players Class
  * @version 0.1
  * @date 2021-04-22
- * 
+ *
  * @copyright Copyright (c) 2021
- * 
+ *
  */
 
 #ifndef BG_PLAYERS_H_
 #define BG_PLAYERS_H_
 
 #include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <iterator>
+#include <utility>
 
 #include "bgtypes.h"
 #include "bgplayer.h"
 
 BG_BEGIN
 
+template <typename T>
+class Player;
+
 /**
  * @brief General Players class for storing list of Player
+ * @code .cpp
+ * virtual ~Players();
+ * @endcode
  * 
- * @tparam T 
+ * @tparam T
  */
 template <typename T>
 class Players
 {
 public:
-  //-------------------CONSTRUCTORS------------------
+  //-------------------CONSTRUCTORS----------------------------------------------------------
 
   /**
    * @brief Construct a new Players object
    */
-  Players();
+  Players() noexcept : _min{0}, _max{0}
+  {
+    _ISDBG_ bgdebug("Players::Players", "_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
+  }
 
   /**
    * @brief Construct a new Players object
-   * 
+   *
    * @param min minimum number of players
    * @param max maximum number of players
    */
-  Players(const std::size_t min, const std::size_t max);
+  Players(size_t min, size_t max) noexcept : _min{min}, _max{max}
+  {
+    _ISDBG_ bgdebug("Players::Players(size_t,size_t)", "_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
+  }
+
+  Players(const Players<T> &other) : _min{other._min}, _max{other._max}
+  {
+    for (const auto &[key, val] : other._players)
+      _players.insert({key, val->copy()}); //copying data from pointer
+  }
+
+  Players<T> &operator=(const Players<T> &other)
+  {
+    if (this != &other)
+    {
+      // Free the existing resource.
+      for (auto &[key, value] : _players)
+        delete value;
+      _players.clear();
+
+      // Copy the data pointer from the source object.
+      _min = other._max;
+      _min = other._max;
+      for (const auto &[key, val] : other._players)
+        _players.insert({key, val->copy()}); //copying data from pointer
+    }
+    return *this;
+  }
+
+  Players(Players<T> &&other) : _min{other._min}, _max{other._max} {  *this = std::move(other); }
+
+  Players<T> &operator=(Players<T> &&other)
+  {
+    if (this != &other)
+    {
+      // Free the existing resource.
+      for (auto &[key, value] : _players)
+        delete value;
+      _players.clear();
+
+      // Copy the data pointer from the source object.
+      _min = other._max;
+      _min = other._max;
+      for (const auto &[key, val] : other._players)
+        _players.insert({key, val->move()}); //moving data from pointer
+
+      // Release the data pointer from the source object so that
+      // the destructor does not free the memory multiple times.
+      other._players.clear();
+      other._min = other._max = 0;
+    }
+    return *this;
+  }
 
   /**
    * @brief [virtual] Destroy the Players object
    */
-  virtual ~Players();
+  virtual ~Players()
+  {
+    _ISDBG_ bgdebug("Players::~Players", "_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
 
-  //-----------------------GETTERS-------------------------
+    _min = _max = 0;
+
+    for (auto &[key, value] : _players)
+      delete value;
+    _players.clear();
+  }
+
+  //-----------------------GETTERS------------------------------------------------------------
 
   //get maximum number of players
-  inline std::size_t max() const;
+  inline auto max() const noexcept { return _max; }
   //get minimum number of players
-  inline std::size_t min() const;
+  inline auto min() const noexcept { return _min; }
   //get size of Player list
-  inline std::size_t size() const;
+  inline auto size() const noexcept { return _players.size(); }
 
   /**
-   * @brief get winner index
-   * 
-   * @return int | -1 => no winner yet
+   * @brief direct refrence to the player object
+   *
+   * @param playerid
+   * @return const Player<T>&
    */
-  inline int winner_index();
+  const auto &at(size_t playerid) const
+  {
+    _ISDBG_ bgdebug("Players::at", "_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
+
+    return _players.at(playerid);
+  }
+  /**
+   * @brief direct refrence to the player object
+   *
+   * @param playerid
+   * @return Player<T>&
+   */
+  auto &at(size_t playerid)
+  {
+    _ISDBG_ bgdebug("Players::at", "_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
+
+    return _players.at(playerid);
+  }
 
   /**
    * @brief direct pointer to the memory array used internally by the Players
-   * 
-   * @param index 
-   * @return const Player<T>* 
+   *
+   * @return const std::vector<Player<T>*>&
    */
-  const Player<T> *at(const std::size_t index) const;
+  const auto &data() const
+  {
+    std::vector<Player<T> *> vecplayers;
+    std::transform(_players.begin(), _players.end(), std::back_inserter(vecplayers), [](auto &kv) { return kv.second; });
+    return vecplayers;
+  }
   /**
    * @brief direct pointer to the memory array used internally by the Players
-   * 
-   * @param index 
-   * @return Player<T>* 
+   *
+   * @return std::vector<Player<T> *> &
    */
-  Player<T> *at(const std::size_t index);
+  auto &data()
+  {
+    std::vector<Player<T> *> vecplayers;
+    std::transform(_players.begin(), _players.end(), std::back_inserter(vecplayers), [](auto &kv) { return kv.second; });
+    return vecplayers;
+  }
 
-  /**
-   * @brief direct pointer to the memory array used internally by the Players
-   * 
-   * @return const std::vector<Player<T> *> 
-   */
-  const std::vector<Player<T> *> &data() const;
-  /**
-   * @brief direct pointer to the memory array used internally by the Players
-   * 
-   * @return std::vector<Player<T> *> 
-   */
-  std::vector<Player<T> *> &data();
-
-  /**
-   * @brief direct pointer to the winner Player
-   * 
-   * @param index 
-   * @return Player<T>* 
-   */
-  const Player<T> *winner() const;
-  /**
-   * @brief direct pointer to the winner Player
-   * 
-   * @param index 
-   * @return Player<T>* 
-   */
-  Player<T> *winner();
-
-  //-----------------------SETTERS-------------------------
+  //-----------------------SETTERS-----------------------------------------------------------
 
   //set maximum current players
-  inline void set_max(const std::size_t max);
+  inline void set_max(size_t max) { _max = max; }
   //set minimum current players
-  inline void set_min(const std::size_t min);
-  //player index of the winner
-  inline bool set_winner(const int winner);
-  //add player using deep copy
-  inline bool insert(const Player<T> &);
+  inline void set_min(size_t min) { _min = min; }
+
+  /**
+   * @brief [deep copy] [using till lifetime]
+   * @param Player Player<T>*
+   * @return true | false
+   */
+  inline bool insert(const Player<T> &P)
+  {
+    _ISDBG_ bgdebug("Players::insert", "_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
+
+    if (size() < max())
+    {
+      _players.insert({P.id(), P.copy()});
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * @brief [move copy] [using till lifetime]
+   * @param Player Player<T>*
+   * @return true | false
+   */
+  inline bool insert(Player<T> &&P)
+  {
+    _ISDBG_ bgdebug("Players::insert", "_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
+
+    if (size() < max())
+    {
+      _players.insert({P.id(), P.move()});
+      return true;
+    }
+    return false;
+  }
+
   //remove player
-  inline bool erase(const std::size_t index);
+  inline void erase(size_t playerid)
+  {
+    _ISDBG_ bgdebug("Players::insert", "playerid=" + std::to_string(playerid) + "|_min=" + std::to_string(_min) + "|_max" + std::to_string(_max) + "|_players=" + std::to_string(_players.size()));
 
-  //-------------------OPERATORS-------------------------
+    delete _players.at(playerid);
+    _players.erase(playerid);
+  }
+
+  //-------------------OPERATORS-----------------------------------------------------------------
 
   /**
    * @brief direct pointer to the memory array used internally by the Players
-   * 
-   * @param index 
-   * @return const Player<T>* 
+   *
+   * @param playerid
+   * @return const Player<T>*
    */
-  const Player<T> *operator()(const std::size_t index) const;
+  const auto &operator[](size_t playerid) const { return at(playerid); }
   /**
    * @brief direct pointer to the memory array used internally by the Players
-   * 
-   * @param index 
-   * @return Player<T>* 
+   *
+   * @param playerid
+   * @return Player<T>*
    */
-  Player<T> *operator()(const std::size_t index);
+  auto &operator[](size_t playerid) { return at(playerid); }
+
+  //--------------------VIRTUAL--------------------------------
+
+  virtual Players<T> *copy() const { return new Players<T>{*this}; }
+  virtual Players<T> *move() { return new Players<T>{std::forward<Players<T>>(*this)}; }
 
 protected:
-  std::size_t _min;                  //minimum number of players in game
-  std::size_t _max;                  //maximum number of players in game
-  int _winner;                       //winner index
-  std::vector<Player<T> *> _players; //list of players
-
-  //-------------------FUNCTIONS-------------------------
-
-  /**
-   * @brief return the direct pointer to the list value
-   * 
-   * @param index 
-   * @return Player<T>* 
-   */
-  inline Player<T> *_AtIndex(const std::size_t index);
+  size_t _min{0};                                   //minimum number of players in game
+  size_t _max{0};                                   //maximum number of players in game
+  std::unordered_map<size_t, Player<T> *> _players; //list of players [id, object]
 };
-
-//-------------------------------------------------------------------------------------------------------
-//---------------------------------------IMPLEMENTATION--------------------------------------------------
-//-------------------------------------------------------------------------------------------------------
-
-template <typename T>
-inline Players<T>::Players() : _min(0), _max(0), _winner(-1) {}
-
-template <typename T>
-inline Players<T>::Players(const std::size_t min, const std::size_t max) : _min(min), _max(min), _winner(-1) {}
-
-template <typename T>
-inline Players<T>::~Players()
-{
-  _min = _max = 0;
-  _winner = -1;
-
-  for (std::size_t i = 0; i < size(); ++i)
-    delete _players.at(i);
-
-  _players.clear();
-  _players.shrink_to_fit();
-}
-
-template <typename T>
-inline std::size_t Players<T>::max() const
-{
-  return _max;
-}
-
-template <typename T>
-inline std::size_t Players<T>::min() const
-{
-  return _min;
-}
-
-template <typename T>
-inline std::size_t Players<T>::size() const
-{
-  return _players.size();
-}
-
-template <typename T>
-inline int Players<T>::winner_index()
-{
-  return _winner;
-}
-
-template <typename T>
-inline const Player<T> *Players<T>::at(const std::size_t index) const
-{
-  return _AtIndex(index);
-}
-
-template <typename T>
-inline Player<T> *Players<T>::at(const std::size_t index)
-{
-  return _AtIndex(index);
-}
-
-template <typename T>
-inline const std::vector<Player<T> *> &Players<T>::data() const
-{
-  return _players;
-}
-
-template <typename T>
-inline std::vector<Player<T> *> &Players<T>::data()
-{
-  return _players;
-}
-
-template <typename T>
-inline const Player<T> *Players<T>::winner() const
-{
-  return _AtIndex(_winner);
-}
-
-template <typename T>
-inline Player<T> *Players<T>::winner()
-{
-  return _AtIndex(_winner);
-}
-
-template <typename T>
-inline void Players<T>::set_max(const std::size_t max)
-{
-  if (size() > max)
-    _players.resize(max);
-  _max = max;
-}
-
-template <typename T>
-inline void Players<T>::set_min(const std::size_t min)
-{
-  _min = min;
-}
-
-template <typename T>
-inline bool Players<T>::set_winner(const int winner_index)
-{
-  if (winner_index < size())
-  {
-    _winner = winner_index;
-    return true;
-  }
-  return false;
-}
-
-template <typename T>
-inline bool Players<T>::insert(const Player<T> &P)
-{
-  if (size() < max())
-  {
-    this->_players.push_back(new Player<T>(P));
-    return true;
-  }
-  return false;
-}
-
-template <typename T>
-inline bool Players<T>::erase(const std::size_t index)
-{
-  if (index < size())
-  {
-    delete this->_player.at(index);
-    _players.erase(_players.begin() + index);
-  }
-  return false;
-}
-
-template <typename T>
-inline const Player<T> *Players<T>::operator()(const std::size_t index) const
-{
-  return _AtIndex(index);
-}
-
-template <typename T>
-inline Player<T> *Players<T>::operator()(const std::size_t index)
-{
-  return _AtIndex(index);
-}
-
-template<typename T>
-inline Player<T>* Players<T>::_AtIndex(const std::size_t index)
-{
-    return index >= 0 && index < size() ? _players.at(index) : nullptr;
-}
 
 BG_END
 
